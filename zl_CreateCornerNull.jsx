@@ -1,16 +1,16 @@
 ﻿/**********************************************************************************************
-    zl_CreateCornerNull
+    zl_CreatePivotalNull
     Copyright (c) 2013 Zack Lovatt. All rights reserved.
     zack@zacklovatt.com
  
-    Name: zl_CreateCornerNull
-    Version: 0.8
+    Name: zl_CreatePivotalNull
+    Version: 0.9
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
-        rotation, scale, etc.
+        rotation, scale, 3d, parented, etc.
         
-        Options for manual offset & parenting null to layer.
+        Options for manual offset & toggle parenting.
 
         Originally requested by Jayse Hansen (jayse.tv)
 
@@ -20,10 +20,10 @@
         
 **********************************************************************************************/
 
-    var zl_CCN__scriptName = "zl_CreateCornerNull";
+    var zl_CPN__scriptName = "zl_CreatePivotalNull";
     
     /****************************** 
-        zl_CreateCornerNull()
+        zl_CreatePivotalNull()
     
         Description:
         This function contains the main logic for this script.
@@ -32,57 +32,61 @@
         thisObj - "this" object.
         curPos - position to put null
         parentNull - bool, whether to parent null to layer
-        xOffset & yOffset - amount of pixels to shift null
+        x/y/zOffset - amount of pixels to shift null
      
         Returns:
         Nothing.
     ******************************/
-    function zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset){
+    function zl_CreatePivotalNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset){
 
         var thisComp = app.project.activeItem;
         app.project.activeItem.selected = true;
                 
         var userLayers = thisComp.selectedLayers;
         
-        for (var i = 0; i < userLayers.length; i++){
-            var thisLayer = userLayers[i];
-            var newNull = thisComp.layers.addNull();
+        if (userLayers.length == 0){
+            alert("Select a layer!");
+        } else {
+            for (var i = 0; i < userLayers.length; i++){
+                var thisLayer = userLayers[i];
+                var newNull = thisComp.layers.addNull();
             
-            newNull.moveBefore(thisLayer);
-            newNull.name = thisLayer.name + " - " + newNull.name;
+                newNull.moveBefore(thisLayer);
+                newNull.name = thisLayer.name + " - " + newNull.name;
             
-            if (thisLayer.threeDLayer == true)
-                newNull.threeDLayer = true;
+                if (thisLayer.threeDLayer == true)
+                    newNull.threeDLayer = true;
 
-            if (thisLayer.parent != null)
-                newNull.parent = thisLayer.parent;
+                if (thisLayer.parent != null)
+                    newNull.parent = thisLayer.parent;
             
-            zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
+                zl_CreatePivotalNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
 
-            if (parentNull == true)
-                thisLayer.parent = newNull;
+                if (parentNull == true)
+                    thisLayer.parent = newNull;
+            }
         }
         
-    } // end function CreateCornerNull
+    } // end function CreatePivotalNull
 
 
     /****************************** 
-        zl_CreateCornerNull_moveNull()
+        zl_CreatePivotalNull_moveNull()
           
         Description:
-        Moves the null to one of 9 corners/key points
+        Moves the null to one of 9 key points
          
         Parameters:
         thisComp - current comp
         sourceLayer - original layer to create null from
         targetLayer - the new null, to shift
         targetPos - target corner to shift to
-        xOffset & yOffset - user-set offsets to position
+        x/y/zOffset - user-set offsets to position
         
         Returns:
         Nothing.
      ******************************/
-    function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset, zOffset){
+    function zl_CreatePivotalNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset, zOffset){
         var is3d = sourceLayer.threeDLayer;
         var resetRot = false;
         
@@ -173,7 +177,7 @@
     
 
     /****************************** 
-        zl_CreateCornerNull_createPalette()
+        zl_CreatePivotalNull_createPalette()
           
         Description:
         Creates ScriptUI Palette Panel
@@ -185,13 +189,13 @@
         Returns:
         Nothing
      ******************************/
-    function zl_CreateCornerNull_createPalette(thisObj) { 
-        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Corner Null',undefined); 
-        var curPos = 0; // 360,147,570,339
+    function zl_CreatePivotalNull_createPalette(thisObj) { 
+        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Pivotal Null',undefined); 
+        var curPos = 0;
         var parentNull = false;
         
         { // Corners    
-            win.cornerGroup = win.add('panel', undefined, 'Corner', {borderStyle: "etched"}); 
+            win.cornerGroup = win.add('panel', undefined, 'Point', {borderStyle: "etched"}); 
             
             { // Top Row
                 var topRow = win.cornerGroup.add('group');
@@ -255,7 +259,7 @@
             win.optionGroup = win.add('panel', undefined, 'Options', {borderStyle: "etched"});
             
             win.parentOption = win.optionGroup.add('checkbox', undefined, '  Parent to null'); 
-            win.parentOption.value = false; 
+            win.parentOption.value = true; 
 
             { // xOffset Line
                 var xOffRow = win.optionGroup.add('group');
@@ -309,24 +313,23 @@
                 if (app.project) {
                     var activeItem = app.project.activeItem;
                     if (activeItem != null && (activeItem instanceof CompItem)) {
-                        app.beginUndoGroup(zl_CCN__scriptName);
+                        app.beginUndoGroup(zl_CPN__scriptName);
                         if (!xOffset || !yOffset || !zOffset){
                             alert("Invalid input!");
                         }else{
-                            zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);
+                            zl_CreatePivotalNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);
                         }
                         app.endUndoGroup();
                     } else {
-                        alert("Select a layer!", zl_CCN__scriptName);
+                        alert("Select a layer!", zl_CPN__scriptName);
                     }
                 } else {
-                    alert("Open a project!", zl_CCN__scriptName);
+                    alert("Open a project!", zl_CPN__scriptName);
                 }
             }
         }
 
-
-
+        
         if (win instanceof Window) {
             win.show();
         } else {
@@ -336,7 +339,7 @@
 
 
     /****************************** 
-        zl_CreateCornerNull_main()
+        zl_CreatePivotalNull_main()
           
         Description:
         Main function
@@ -347,9 +350,9 @@
         Returns:
         Nothing
      ******************************/
-    function zl_CreateCornerNull_main(thisObj) {
-        zl_CreateCornerNull_createPalette(thisObj);
+    function zl_CreatePivotalNull_main(thisObj) {
+        zl_CreatePivotalNull_createPalette(thisObj);
     } // end function main
 
     // RUN!
-    zl_CreateCornerNull_main(this);
+    zl_CreatePivotalNull_main(this);
