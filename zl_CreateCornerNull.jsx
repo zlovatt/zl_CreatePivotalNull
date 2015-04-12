@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.1
+    Version: 0.2
  
     Description:
         This script looks at a selected shape layer and breaks apart all vector
@@ -23,114 +23,46 @@
 
     var zl_CCN__scriptName = "zl_CreateCornerNull";
     
-	/****************************** 
+    /****************************** 
         zl_CreateCornerNull()
-	
+    
         Description:
         This function contains the main logic for this script.
-	 
+     
         Parameters:
         thisObj - "this" object.
-	 
+        curPos - position to put null
+     
         Returns:
         Nothing.
-	******************************/
-    function zl_CreateCornerNull(thisObj, curPos){
+    ******************************/
+    function zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset){
 
         var thisComp = app.project.activeItem;
         app.project.activeItem.selected = true;
-        var thisLayer = thisComp.selectedLayers[0];
+                
+        var userLayers = thisComp.selectedLayers;
+        
+        for (var i = 0; i < userLayers.length; i++){
+            var thisLayer = userLayers[i];
+            var newNull = thisComp.layers.addNull();
+            
+            newNull.moveBefore(thisLayer);
 
-        // Error checking; ensure shape layer is selected
- /*       if (!(thisLayer instanceof CompItem)){
-            alert("Select a layer! 2");
-            return;
+            if (thisLayer.threeDLayer == true)
+                newNull.threeDLayer = true;
+                
+            zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset);
+            
+            if (parentNull == true)
+                newNull.parent = thisLayer;
         }
-*/
-
-        var vectorGroupCollection = new Array;        
-        var shapeGroupCollection = thisLayer.property(2);
-        var numGroups = shapeGroupCollection.numProperties;
-
-        // Build our initial list of shape object indices
-        vectorGroupCollection = zl_CreateCornerNull_makeShapeIndexList(numGroups, shapeGroupCollection);
-
-        // As we now know the # of shape groups, we know how many layers to make.
-        // Make them, and for each one isolate one shape object
-        for (var i = 0; i < vectorGroupCollection.length; i++){
-            thisLayer.duplicate();
-            zl_CreateCornerNull_isolateGroup(thisComp.layer(thisLayer.index-1), vectorGroupCollection, i);
-            if (zl_ESL__centreAnchorPoints == true)
-                zl_CreateCornerNull_centreAnchorPoint(thisComp, thisComp.layer(thisLayer.index-1));
-       } 
-
-        thisLayer.enabled = false;
+        
     } // end function CreateCornerNull
 
 
     /****************************** 
-        zl_CreateCornerNull_isolateGroup()
-          
-        Description:
-        This function gets the earliest inPoint for target layers
-         
-        Parameters:
-        targetLayer - layer to strip down
-        vectorGroupCollection - collection of all shape groups (not effects)
-        targetIndex - index of the shape to keep for this layer
-        
-        Returns:
-        Nothing
-     ******************************/
-    function zl_CreateCornerNull_isolateGroup(targetLayer, vectorGroupCollection, targetIndex){
-        var targetShapeCollection = targetLayer.property(2);
-        var tempNumShapeGroups = targetShapeCollection.numProperties;
-        
-        // Push the target shape to the top of the stack
-        targetShapeCollection.property(vectorGroupCollection[targetIndex]).moveTo(1);
-
-        // Rebuild the shape index list
-        var newVCG = zl_CreateCornerNull_makeShapeIndexList(tempNumShapeGroups, targetShapeCollection);
-
-        // Run through the objects and remove the non-target shapes (preserving the effects)
-        for (var i = newVCG.length-1; i > 0; i--)
-            targetShapeCollection.property(newVCG[i]).remove();
-    } // end function isolateGroup
-
-    /****************************** 
-        zl_CreateCornerNull_makeShapeIndexList()
-          
-        Description:
-        This function builds a list in array format of the indices of all shape groups on a layer
-         
-        Parameters:
-        targetLayer - layer to strip down
-        vectorGroupCollection - collection of all shape groups (not effects)
-        targetIndex - index of the shape to keep for this layer
-        
-        Returns:
-        Array of shape group indices
-     ******************************/
-    function zl_CreateCornerNull_makeShapeIndexList(numGroups, shapeGroupCollection){
-        var shapeIndexList = new Array;
-        var vectorShapeText = new RegExp("Vector Shape");
-        var vectorGroupText = new RegExp("Vector Group");
-
-        var j = 0;
-
-        for (var i = 1; i <= numGroups; i++){
-            if (vectorShapeText.test(shapeGroupCollection.property(i).matchName) || vectorGroupText.test(shapeGroupCollection.property(i).matchName)){
-                shapeIndexList[j] = i;
-                j++;
-            }
-        }
-    
-    return shapeIndexList
-    } // end function makeShapeIndexList
-
-
-    /****************************** 
-        zl_CreateCornerNull_centreAnchorPoint()
+        zl_CreateCornerNull_moveNull()
           
         Description:
         centres the anchor point of current layer
@@ -143,24 +75,56 @@
         Returns:
         Array of shape group indices
      ******************************/
-    function zl_CreateCornerNull_centreAnchorPoint(thisComp, targetLayer){
-        var sourceRect = targetLayer.sourceRectAtTime(thisComp.time,false);
-        var newAnch = [sourceRect.width/2, sourceRect.height/2];
-        var oldAnch = targetLayer.anchorPoint.value;
+    function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset){
+        var sourceRect = sourceLayer.sourceRectAtTime(thisComp.time,false);
+        var newPos = [sourceRect.width/2, sourceRect.height/2, 0];
 
-        var xAdjust = newAnch[0] + sourceRect.left;
-        var yAdjust = newAnch[1] + sourceRect.top;
+        switch (targetPos){
+            case 0:
+                newPos = [0, 0, 0];
+                break;
+            case 1:
+                newPos = [sourceRect.width/2, 0, 0];
+                break;
+            case 2:
+                newPos = [sourceRect.width, 0, 0];
+                break;
+            case 3:
+                newPos = [0, sourceRect.height/2, 0];
+                break;
+            case 4:
+                newPos = [sourceRect.width/2, sourceRect.height/2, 0];
+                break;
+            case 5:
+                newPos = [sourceRect.width, sourceRect.height/2, 0];
+                break;
+            case 6:
+                newPos = [0, sourceRect.height, 0];
+                break;
+            case 7:
+                newPos = [sourceRect.width/2, sourceRect.height, 0];
+                break;
+            case 8:
+                newPos = [sourceRect.width, sourceRect.height, 0];
+                break;
+        }
     
-        targetLayer.anchorPoint.setValue([xAdjust, yAdjust]);
+        var oldAnch = sourceLayer.anchorPoint.value;
+
+        var xAdjust = newPos[0] + sourceRect.left;
+        var yAdjust = newPos[1] + sourceRect.top;
         
-        var xShift = (xAdjust - oldAnch[0]) * (targetLayer.scale.value[0]/100);
-        var yShift = (yAdjust - oldAnch[1])  * (targetLayer.scale.value[1]/100);    
+        var xShift = (xAdjust - oldAnch[0]) * (sourceLayer.scale.value[0]/100);
+        var yShift = (yAdjust - oldAnch[1])  * (sourceLayer.scale.value[1]/100);    
+        var zShift = (oldAnch[2]) * (sourceLayer.scale.value[2]/100);
+        
+        var xPos = sourceLayer.position.value[0];
+        var yPos = sourceLayer.position.value[1];
+        var zPos = sourceLayer.position.value[2];
 
-        var xPos = targetLayer.position.value[0];
-        var yPos = targetLayer.position.value[1];
-
-        targetLayer.position.setValue([xPos + xShift, yPos + yShift]);
-    } // end function centreAnchorPoint
+        targetLayer.position.setValue([xPos + xShift + xOffset, yPos + yShift + yOffset, zPos + zShift]);
+                
+    } // end function moveNull
     
     
     /****************************** 
@@ -177,10 +141,11 @@
         Nothing
      ******************************/
     function zl_CreateCornerNull_createPalette(thisObj) { 
-        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Corner Null',[371,147,531,339]); 
-        var curPos = 0;
+        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Corner Null',[371,147,531,457]); 
+        var curPos = 0; // 360,147,570,339
+        var parentNull = false;
         
-        { // Options    
+        { // Corners    
             win.cornerGroup = win.add('panel', [14,14,145,133], 'Corner', {borderStyle: "etched"}); 
             
             { // Top Row
@@ -205,8 +170,29 @@
             curPos = 4;
         }
 
-        
+        { // Options
+            win.optionGroup = win.add('panel', [14,186,145,295], 'Options', {borderStyle: "etched"});
+            win.parentOption = win.add('checkbox', [33,204,142,226], 'Parent to layer'); 
+            win.parentOption.value = false; 
 
+            { // xOffset Line
+                win.xOffLabel = win.optionGroup.add('statictext', [10,40,60,60], 'X Offset'); 
+                win.xOffLabel.justify = 'right'; 
+                win.xOffInput = win.optionGroup.add('edittext', [65,37,95,59], ''); 
+                win.xOffInput.text = "0";
+                win.xOffPixels = win.optionGroup.add('statictext', [98,40,118,60], 'px'); 
+                win.xOffPixels.justify = 'left'; 
+            }
+    
+            { // yOffset Line
+                win.xOffLabel = win.optionGroup.add('statictext', [10,70,60,90], 'Y Offset'); 
+                win.xOffLabel.justify = 'right'; 
+                win.yOffInput = win.optionGroup.add('edittext', [65,67,95,89], ''); 
+                win.yOffInput.text = "0";
+                win.yOffPixels = win.optionGroup.add('statictext', [98,70,118,90], 'px'); 
+                win.yOffPixels.justify = 'left'; 
+            }
+        }
 
         { // Buttons
             win.explodeButton = win.add('button', [12,149,146,175], 'Create'); 
@@ -217,11 +203,15 @@
                     }
                 }
             
+                var parentNull = win.parentOption.value;
+                var xOffset = parseInt(win.xOffInput.text);
+                var yOffset = parseInt(win.yOffInput.text);
+                                
                 if (app.project) {
                     var activeItem = app.project.activeItem;
                     if (activeItem != null && (activeItem instanceof CompItem)) {
                         app.beginUndoGroup(zl_CCN__scriptName);
-                        zl_CreateCornerNull(thisObj, curPos);
+                        zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset);
                         app.endUndoGroup();
                     } else {
                         alert("Select a layer!", zl_CCN__scriptName);
@@ -231,7 +221,7 @@
                 }
             }
         }
-    
+
         
         if (win instanceof Window) {
             win.show();
