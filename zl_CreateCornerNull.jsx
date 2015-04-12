@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreatePivotalNull
-    Version: 1.0
+    Version: 1.1
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -37,7 +37,7 @@
         Returns:
         Nothing.
     ******************************/
-    function zl_CreatePivotalNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset){
+    function zl_CreatePivotalNull(thisObj, curPos, parentNull, offsetArray){
 
         var thisComp = app.project.activeItem;
         app.project.activeItem.selected = true;
@@ -60,7 +60,7 @@
                 if (thisLayer.parent != null)
                     newNull.parent = thisLayer.parent;
             
-                zl_CreatePivotalNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
+                zl_CreatePivotalNull_moveNull(thisComp, thisLayer, newNull, curPos, offsetArray);
 
                 if (parentNull == true)
                     thisLayer.parent = newNull;
@@ -86,7 +86,7 @@
         Returns:
         Nothing.
      ******************************/
-    function zl_CreatePivotalNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset, zOffset){
+    function zl_CreatePivotalNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, offsetArray){
         var is3d = sourceLayer.threeDLayer;
         var resetRot = false;
         
@@ -157,7 +157,7 @@
         var yPos = sourceLayer.position.value[1];
         var zPos = sourceLayer.position.value[2];
 
-        targetLayer.position.setValue([xPos + xShift + parseInt(xOffset), yPos + yShift + parseInt(yOffset), zPos + zShift + parseInt(zOffset)]);
+        targetLayer.position.setValue([xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
 
         if (resetRot == true){
             targetLayer.parent = sourceLayer;
@@ -229,36 +229,36 @@
                 for (var j = 0; j < win.cornerGroup.children[i].children.length; j++){
                     win.cornerGroup.children[i].children[j].id = counter;
                     counter++
+                    
+                    win.cornerGroup.children[i].children[j].onClick = function(event){
+                        curPos = this.id;
+
+                        if (this.parent.label == "r1") {
+                            for (var i = 0; i < midRow.children.length; i++)
+                                midRow.children[i].value = false;
+                            for (var i = 0; i < lowRow.children.length; i++)
+                                lowRow.children[i].value = false;
+                        } else if (this.parent.label == "r2"){
+                            for (var i = 0; i < topRow.children.length; i++)
+                                topRow.children[i].value = false;
+                            for (var i = 0; i < lowRow.children.length; i++)
+                                lowRow.children[i].value = false;
+                        } else if (this.parent.label == "r3"){
+                            for (var i = 0; i < topRow.children.length; i++)
+                                topRow.children[i].value = false;
+                            for (var i = 0; i < midRow.children.length; i++)
+                                midRow.children[i].value = false;
+                        } // end elses
+                    }; // end onClick
                 }
             }
-
-            win.cornerGroup.addEventListener ("click", function (event){
-                curPos = event.target.id;
-
-                if (event.target.parent.label == "r1") {
-                    for (var i = 0; i < midRow.children.length; i++)
-                        midRow.children[i].value = false;
-                    for (var i = 0; i < lowRow.children.length; i++)
-                        lowRow.children[i].value = false;
-                } else if (event.target.parent.label == "r2"){
-                    for (var i = 0; i < topRow.children.length; i++)
-                        topRow.children[i].value = false;
-                    for (var i = 0; i < lowRow.children.length; i++)
-                        lowRow.children[i].value = false;
-                } else if (event.target.parent.label == "r3"){
-                    for (var i = 0; i < topRow.children.length; i++)
-                        topRow.children[i].value = false;
-                    for (var i = 0; i < midRow.children.length; i++)
-                        midRow.children[i].value = false;
-                }
-            });
-        }
+        } // end Corners
 
 
         { // Options
             win.optionGroup = win.add('panel', undefined, 'Options', {borderStyle: "etched"});
             
-            win.parentOption = win.optionGroup.add('checkbox', undefined, '  Parent to null'); 
+            win.parentOption = win.optionGroup.add('checkbox', undefined, '\u00A0\u00A0Parent to null'); 
             win.parentOption.value = true; 
 
             { // xOffset Line
@@ -306,18 +306,16 @@
                 }
             
                 var parentNull = win.parentOption.value;
-                var xOffset = checkStr(xOffRow.xOffInput.text);
-                var yOffset = checkStr(yOffRow.yOffInput.text);
-                var zOffset = checkStr(zOffRow.zOffInput.text);
+                var offsetArray = [checkStr(xOffRow.xOffInput.text), checkStr(yOffRow.yOffInput.text), checkStr(zOffRow.zOffInput.text)]
 
                 if (app.project) {
                     var activeItem = app.project.activeItem;
                     if (activeItem != null && (activeItem instanceof CompItem)) {
                         app.beginUndoGroup(zl_CPN__scriptName);
-                        if (!xOffset || !yOffset || !zOffset){
+                        if (!offsetArray[0] || !offsetArray[1] || !offsetArray[2]){
                             alert("Invalid input!");
                         }else{
-                            zl_CreatePivotalNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);
+                            zl_CreatePivotalNull(thisObj, curPos, parentNull, offsetArray);
                         }
                         app.endUndoGroup();
                     } else {
