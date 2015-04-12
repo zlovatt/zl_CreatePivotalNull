@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.6
+    Version: 0.7
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -57,7 +57,7 @@
             zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
 
             if (parentNull == true)
-                newNull.parent = thisLayer;
+                thisLayer.parent = newNull;
         }
         
     } // end function CreateCornerNull
@@ -95,11 +95,12 @@
         }
     
         if (is3d)
-            if (sourceLayer.rotation.isModified || sourceLayer.orientation.isModified){
+            if (sourceLayer.xRotation.isModified || sourceLayer.yRotation.isModified || sourceLayer.zRotation.isModified || sourceLayer.orientation.isModified){
+                sourceLayer.orientation.setValue([0,0,0]);
+
                 sourceLayer.xRotation.setValue(0);
                 sourceLayer.yRotation.setValue(0);
                 sourceLayer.zRotation.setValue(0);
-                sourceLayer.orientation.setValue([0,0,0]);
                 resetRot = true;
             }
 
@@ -136,7 +137,6 @@
                 break;
         }
 
-
         var oldAnch = sourceLayer.anchorPoint.value;
 
         var xAdjust = newPos[0] + sourceRect.left;
@@ -152,20 +152,20 @@
 
         targetLayer.position.setValue([xPos + xShift + parseInt(xOffset), yPos + yShift + parseInt(yOffset), zPos + zShift + parseInt(zOffset)]);
 
-        if (resetRot = true){
+        if (resetRot == true){
             targetLayer.parent = sourceLayer;
-            
+
             if (!is3d)
                 sourceLayer.rotation.setValue(tempRot);
             else if (is3d){
-                sourceLayer.property("orientation").setValue(tempOrient); 
                 sourceLayer.zRotation.setValue(tempRot[2]);
                 sourceLayer.yRotation.setValue(tempRot[1]);
                 sourceLayer.xRotation.setValue(tempRot[0]);
+                sourceLayer.orientation.setValue(tempOrient); 
             }
 
             targetLayer.parent = null;
-        }                               
+        }
     } // end function moveNull
     
 
@@ -251,7 +251,7 @@
         { // Options
             win.optionGroup = win.add('panel', undefined, 'Options', {borderStyle: "etched"});
             
-            win.parentOption = win.optionGroup.add('checkbox', undefined, 'Parent to layer'); 
+            win.parentOption = win.optionGroup.add('checkbox', undefined, '  Parent to null'); 
             win.parentOption.value = false; 
 
             { // xOffset Line
