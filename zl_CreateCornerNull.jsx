@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreatePivotalNull
-    Version: 1.2a
+    Version: 1.1
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -87,11 +87,22 @@
         Nothing.
      ******************************/
     function zl_CreatePivotalNull_setKeys(thisComp, rotationProperty, newValue){
+        
         if (rotationProperty.isTimeVarying == true){
             rotationProperty.setValueAtKey(rotationProperty.nearestKeyIndex(thisComp.time), newValue);
+            
+            //            var valDiff = rotationProperty.valueAtTime(rotationProperty.keyTime(rotationProperty.nearestKeyIndex(thisComp.time)),false);
+            var valDiff = rotationProperty.valueAtTime((thisComp.time),false);
+            
+            for (var i = 1; i <= rotationProperty.numKeys; i++){
+                var curVal = rotationProperty.keyValue(i);
+                rotationProperty.setValueAtKey(i, curVal - valDiff);
+            }
+
         } else {
             rotationProperty.setValue(newValue);
         }
+
     }
  
     /****************************** 
@@ -182,7 +193,8 @@
         var yPos = sourceLayer.position.value[1];
         var zPos = sourceLayer.position.value[2];
 
-        targetLayer.position.setValue([xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
+        zl_CreatePivotalNull_setKeys(thisComp, targetLayer.position, [xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
+        //targetLayer.position.setValue([xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
 
         if (resetRot == true){
             targetLayer.parent = sourceLayer;
