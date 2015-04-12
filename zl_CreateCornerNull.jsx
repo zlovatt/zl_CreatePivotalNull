@@ -89,15 +89,22 @@
     function zl_CreatePivotalNull_setKeys(thisComp, rotationProperty, newValue){
         
         if (rotationProperty.isTimeVarying == true){
-            rotationProperty.setValueAtKey(rotationProperty.nearestKeyIndex(thisComp.time), newValue);
             
-            //            var valDiff = rotationProperty.valueAtTime(rotationProperty.keyTime(rotationProperty.nearestKeyIndex(thisComp.time)),false);
-            var valDiff = rotationProperty.valueAtTime((thisComp.time),false);
+            var nearestKeyIndexVal = rotationProperty.nearestKeyIndex(thisComp.time);
+            var valDiff = rotationProperty.keyValue(nearestKeyIndexVal);
             
-            for (var i = 1; i <= rotationProperty.numKeys; i++){
-                var curVal = rotationProperty.keyValue(i);
-                rotationProperty.setValueAtKey(i, curVal - valDiff);
-            }
+            rotationProperty.setValueAtKey(nearestKeyIndexVal, newValue);
+
+            //var valDiff = rotationProperty.valueAtTime(rotationProperty.keyTime(rotationProperty.nearestKeyIndex(thisComp.time)),false);
+            //var valDiff = rotationProperty.valueAtTime(thisComp.time,false);
+            
+      //      for (var i = 1; i <= rotationProperty.numKeys; i++){
+     //           var curVal = rotationProperty.keyValue(i);
+                //if (i == nearestKeyIndex) return;
+   //             rotationProperty.setValueAtKey(i, valDiff - curVal);
+   //         }
+        
+            //rotationProperty.setValue(newValue);
 
         } else {
             rotationProperty.setValue(newValue);
