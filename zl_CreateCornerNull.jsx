@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreatePivotalNull
-    Version: 0.9
+    Version: 1.0
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
