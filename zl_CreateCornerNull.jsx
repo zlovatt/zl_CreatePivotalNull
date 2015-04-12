@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.7
+    Version: 0.8
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -54,6 +54,9 @@
             if (thisLayer.threeDLayer == true)
                 newNull.threeDLayer = true;
 
+            if (thisLayer.parent != null)
+                newNull.parent = thisLayer.parent;
+            
             zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
 
             if (parentNull == true)
