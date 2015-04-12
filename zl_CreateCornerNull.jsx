@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.2
+    Version: 0.3
  
     Description:
         This script looks at a selected shape layer and breaks apart all vector
@@ -48,7 +48,8 @@
             var newNull = thisComp.layers.addNull();
             
             newNull.moveBefore(thisLayer);
-
+            newNull.name = thisLayer.name + " - " + newNull.name;
+            
             if (thisLayer.threeDLayer == true)
                 newNull.threeDLayer = true;
                 
@@ -65,17 +66,33 @@
         zl_CreateCornerNull_moveNull()
           
         Description:
-        centres the anchor point of current layer
+        Moves the null to one of 9 corners/key points
          
         Parameters:
-        targetLayer - layer to strip down
-        vectorGroupCollection - collection of all shape groups (not effects)
-        targetIndex - index of the shape to keep for this layer
+        thisComp - current comp
+        sourceLayer - original layer to create null from
+        targetLayer - the new null, to shift
+        targetPos - target corner to shift to
+        xOffset & yOffset - user-set offsets to position
         
         Returns:
-        Array of shape group indices
+        Nothing.
      ******************************/
     function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset){
+        
+        var tempRot = [sourceLayer.xRotation.value, sourceLayer.yRotation.value, sourceLayer.zRotation.value];
+        var tempOrient = sourceLayer.orientation.value;
+        var resetRot = false;
+
+        if (sourceLayer.rotation.isModified || sourceLayer.orientation.isModified){
+            sourceLayer.zRotation.setValue(0);
+            sourceLayer.yRotation.setValue(0);
+            sourceLayer.xRotation.setValue(0);
+            
+            sourceLayer.orientation.setValue([0,0,0]);
+            resetRot = true;
+        }
+
         var sourceRect = sourceLayer.sourceRectAtTime(thisComp.time,false);
         var newPos = [sourceRect.width/2, sourceRect.height/2, 0];
 
@@ -123,10 +140,20 @@
         var zPos = sourceLayer.position.value[2];
 
         targetLayer.position.setValue([xPos + xShift + xOffset, yPos + yShift + yOffset, zPos + zShift]);
-                
+
+        if (resetRot = true){
+            targetLayer.parent = sourceLayer;
+            
+            sourceLayer.orientation.setValue(tempOrient);
+            sourceLayer.zRotation.setValue(tempRot[2]);
+            sourceLayer.yRotation.setValue(tempRot[1]);
+            sourceLayer.xRotation.setValue(tempRot[0]);
+
+            targetLayer.parent = null;
+        }
     } // end function moveNull
     
-    
+
     /****************************** 
         zl_CreateCornerNull_createPalette()
           
