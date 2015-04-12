@@ -1,12 +1,7 @@
-zl_CreatePivotalNull
-
-Version: 1.1
-
-zack@zacklovatt.com
-
-
-Copyright (c) 2015 Zack Lovatt. All rights reserved.
-
+##### zl_CreatePivotalNull
+#### Version: 1.1
+#### zack@zacklovatt.com
+### Copyright (c) 2015 Zack Lovatt. All rights reserved.
 
 This script is provided "as is," without warranty of any kind, expressed
 or implied. In no event shall the author be held liable for any damages 
