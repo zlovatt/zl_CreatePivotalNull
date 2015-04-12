@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.5
+    Version: 0.6
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -53,9 +53,9 @@
             
             if (thisLayer.threeDLayer == true)
                 newNull.threeDLayer = true;
-                
+
             zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
-            
+
             if (parentNull == true)
                 newNull.parent = thisLayer;
         }
@@ -80,19 +80,28 @@
         Nothing.
      ******************************/
     function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset, zOffset){
-        
-        var tempRot = [sourceLayer.xRotation.value, sourceLayer.yRotation.value, sourceLayer.zRotation.value];
-        var tempOrient = sourceLayer.orientation.value;
+        var is3d = sourceLayer.threeDLayer;
         var resetRot = false;
-
-        if (sourceLayer.rotation.isModified || sourceLayer.orientation.isModified){
-            sourceLayer.zRotation.setValue(0);
-            sourceLayer.yRotation.setValue(0);
-            sourceLayer.xRotation.setValue(0);
-            
-            sourceLayer.orientation.setValue([0,0,0]);
+        
+        if (is3d){
+            var tempRot = [sourceLayer.xRotation.value, sourceLayer.yRotation.value, sourceLayer.zRotation.value];
+            var tempOrient = sourceLayer.orientation.value;
+        } else
+            tempRot = sourceLayer.rotation.value;
+        
+        if (sourceLayer.rotation.isModified){
+            sourceLayer.rotation.setValue(0);
             resetRot = true;
         }
+    
+        if (is3d)
+            if (sourceLayer.rotation.isModified || sourceLayer.orientation.isModified){
+                sourceLayer.xRotation.setValue(0);
+                sourceLayer.yRotation.setValue(0);
+                sourceLayer.zRotation.setValue(0);
+                sourceLayer.orientation.setValue([0,0,0]);
+                resetRot = true;
+            }
 
         var sourceRect = sourceLayer.sourceRectAtTime(thisComp.time,false);
         var newPos = [sourceRect.width/2, sourceRect.height/2, 0];
@@ -126,16 +135,17 @@
                 newPos = [sourceRect.width, sourceRect.height, 0];
                 break;
         }
-    
+
+
         var oldAnch = sourceLayer.anchorPoint.value;
 
         var xAdjust = newPos[0] + sourceRect.left;
         var yAdjust = newPos[1] + sourceRect.top;
-        
+
         var xShift = (xAdjust - oldAnch[0]) * (sourceLayer.scale.value[0]/100);
         var yShift = (yAdjust - oldAnch[1])  * (sourceLayer.scale.value[1]/100);    
         var zShift = (oldAnch[2]) * (sourceLayer.scale.value[2]/100);
-        
+
         var xPos = sourceLayer.position.value[0];
         var yPos = sourceLayer.position.value[1];
         var zPos = sourceLayer.position.value[2];
@@ -145,13 +155,17 @@
         if (resetRot = true){
             targetLayer.parent = sourceLayer;
             
-            sourceLayer.orientation.setValue(tempOrient);
-            sourceLayer.zRotation.setValue(tempRot[2]);
-            sourceLayer.yRotation.setValue(tempRot[1]);
-            sourceLayer.xRotation.setValue(tempRot[0]);
+            if (!is3d)
+                sourceLayer.rotation.setValue(tempRot);
+            else if (is3d){
+                sourceLayer.property("orientation").setValue(tempOrient); 
+                sourceLayer.zRotation.setValue(tempRot[2]);
+                sourceLayer.yRotation.setValue(tempRot[1]);
+                sourceLayer.xRotation.setValue(tempRot[0]);
+            }
 
             targetLayer.parent = null;
-        }
+        }                               
     } // end function moveNull
     
 
@@ -178,6 +192,7 @@
             
             { // Top Row
                 var topRow = win.cornerGroup.add('group');
+                    topRow.label = "r1";
                     topRow.a1 = topRow.add('radiobutton', undefined, ''); 
                     topRow.a2 = topRow.add('radiobutton', undefined, ''); 
                     topRow.a3 = topRow.add('radiobutton', undefined, ''); 
@@ -185,21 +200,53 @@
 
             { // Middle Row
                 var midRow = win.cornerGroup.add('group');
+                    midRow.label = "r2";
                     midRow.b1 = midRow.add('radiobutton', undefined, ''); 
                     midRow.b2 = midRow.add('radiobutton', undefined, ''); 
                     midRow.b3 = midRow.add('radiobutton', undefined, ''); 
             }
 
             { // Bottom Row
-                var lowRow = win.cornerGroup.add('group');
+                var lowRow = win.cornerGroup.add('group')
+                    lowRow.label = "r3";
                     lowRow.c1 = lowRow.add('radiobutton', undefined, ''); 
                     lowRow.c2 = lowRow.add('radiobutton', undefined, ''); 
                     lowRow.c3 = lowRow.add('radiobutton', undefined, ''); 
             }
-        
+
+            var counter = 0;
             midRow.b2.value = true;
             curPos = 4;
+
+            for (var i = 0; i < win.cornerGroup.children.length; i++){
+                for (var j = 0; j < win.cornerGroup.children[i].children.length; j++){
+                    win.cornerGroup.children[i].children[j].id = counter;
+                    counter++
+                }
+            }
+
+            win.cornerGroup.addEventListener ("click", function (event){
+                curPos = event.target.id;
+
+                if (event.target.parent.label == "r1") {
+                    for (var i = 0; i < midRow.children.length; i++)
+                        midRow.children[i].value = false;
+                    for (var i = 0; i < lowRow.children.length; i++)
+                        lowRow.children[i].value = false;
+                } else if (event.target.parent.label == "r2"){
+                    for (var i = 0; i < topRow.children.length; i++)
+                        topRow.children[i].value = false;
+                    for (var i = 0; i < lowRow.children.length; i++)
+                        lowRow.children[i].value = false;
+                } else if (event.target.parent.label == "r3"){
+                    for (var i = 0; i < topRow.children.length; i++)
+                        topRow.children[i].value = false;
+                    for (var i = 0; i < midRow.children.length; i++)
+                        midRow.children[i].value = false;
+                }
+            });
         }
+
 
         { // Options
             win.optionGroup = win.add('panel', undefined, 'Options', {borderStyle: "etched"});
@@ -211,39 +258,36 @@
                 var xOffRow = win.optionGroup.add('group');
                     xOffRow.xOffLabel = xOffRow.add('statictext', undefined, 'X Offset'); 
                     xOffRow.xOffInput = xOffRow.add('edittext', undefined, ''); 
-                    //xOffRow.xOffPixels = xOffRow.add('statictext', undefined, 'px'); 
             }
     
             { // yOffset Line
                 var yOffRow = win.optionGroup.add('group');
                     yOffRow.yOffLabel = yOffRow.add('statictext', undefined, 'Y Offset'); 
                     yOffRow.yOffInput = yOffRow.add('edittext', undefined, ''); 
-                    //yOffRow.yOffPixels = yOffRow.add('statictext', undefined, 'px'); 
             }
         
             { // zOffset Line
                 var zOffRow = win.optionGroup.add('group');
                     zOffRow.zOffLabel = zOffRow.add('statictext', undefined, 'Z Offset'); 
                     zOffRow.zOffInput = zOffRow.add('edittext', undefined, ''); 
-                    //zOffRow.zOffPixels = zOffRow.add('statictext', undefined, 'px'); 
             }
         
             xOffRow.xOffInput.text = yOffRow.yOffInput.text = zOffRow.zOffInput.text = "0 px";
             xOffRow.xOffInput.characters = yOffRow.yOffInput.characters = zOffRow.zOffInput.characters = 4;
-
+            
+            function checkStr (str) {
+                try {
+                    var array = str.split(" ");
+                    var num = String (Number (array[0]));
+                    if (isNaN(num))
+                        throw new Error("Not a number");
+                    return num;
+                } catch (_) {
+                    return NaN;
+                }
+            } // update
         }
 
-        function update (str) {
-            try {
-                var array = str.split(" ");
-                var num = String (Number (array[0]));
-                if (isNaN(num))
-                    throw new Error("Not a number");
-                return num;
-            } catch (_) {
-                return NaN;
-            }
-        } // update
 
         { // Buttons
             win.explodeButton = win.add('button', undefined, 'Create'); 
@@ -255,9 +299,9 @@
                 }
             
                 var parentNull = win.parentOption.value;
-                var xOffset = update(xOffRow.xOffInput.text);
-                var yOffset = update(yOffRow.yOffInput.text);
-                var zOffset = update(zOffRow.zOffInput.text);
+                var xOffset = checkStr(xOffRow.xOffInput.text);
+                var yOffset = checkStr(yOffRow.yOffInput.text);
+                var zOffset = checkStr(zOffRow.zOffInput.text);
 
                 if (app.project) {
                     var activeItem = app.project.activeItem;
@@ -266,7 +310,8 @@
                         if (!xOffset || !yOffset || !zOffset){
                             alert("Invalid input!");
                         }else{
-                            zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);}
+                            zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);
+                        }
                         app.endUndoGroup();
                     } else {
                         alert("Select a layer!", zl_CCN__scriptName);
