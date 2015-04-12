@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.4
+    Version: 0.5
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -37,7 +37,7 @@
         Returns:
         Nothing.
     ******************************/
-    function zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset){
+    function zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset){
 
         var thisComp = app.project.activeItem;
         app.project.activeItem.selected = true;
@@ -54,7 +54,7 @@
             if (thisLayer.threeDLayer == true)
                 newNull.threeDLayer = true;
                 
-            zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset);
+            zl_CreateCornerNull_moveNull(thisComp, thisLayer, newNull, curPos, xOffset, yOffset, zOffset);
             
             if (parentNull == true)
                 newNull.parent = thisLayer;
@@ -79,7 +79,7 @@
         Returns:
         Nothing.
      ******************************/
-    function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset){
+    function zl_CreateCornerNull_moveNull(thisComp, sourceLayer, targetLayer, targetPos, xOffset, yOffset, zOffset){
         
         var tempRot = [sourceLayer.xRotation.value, sourceLayer.yRotation.value, sourceLayer.zRotation.value];
         var tempOrient = sourceLayer.orientation.value;
@@ -140,7 +140,7 @@
         var yPos = sourceLayer.position.value[1];
         var zPos = sourceLayer.position.value[2];
 
-        targetLayer.position.setValue([xPos + xShift + xOffset, yPos + yShift + yOffset, zPos + zShift]);
+        targetLayer.position.setValue([xPos + xShift + parseInt(xOffset), yPos + yShift + parseInt(yOffset), zPos + zShift + parseInt(zOffset)]);
 
         if (resetRot = true){
             targetLayer.parent = sourceLayer;
@@ -169,61 +169,84 @@
         Nothing
      ******************************/
     function zl_CreateCornerNull_createPalette(thisObj) { 
-        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Corner Null',[371,147,531,457]); 
+        var win = (thisObj instanceof Panel) ? thisObj : new Window('palette', 'Create Corner Null',undefined); 
         var curPos = 0; // 360,147,570,339
         var parentNull = false;
         
         { // Corners    
-            win.cornerGroup = win.add('panel', [14,14,145,133], 'Corner', {borderStyle: "etched"}); 
+            win.cornerGroup = win.add('panel', undefined, 'Corner', {borderStyle: "etched"}); 
             
             { // Top Row
-                win.a1 = win.cornerGroup.add('radiobutton', [18,17,48,39], ''); 
-                win.a2 = win.cornerGroup.add('radiobutton', [58,17,88,39], ''); 
-                win.a3 = win.cornerGroup.add('radiobutton', [98,17,128,39], ''); 
+                var topRow = win.cornerGroup.add('group');
+                    topRow.a1 = topRow.add('radiobutton', undefined, ''); 
+                    topRow.a2 = topRow.add('radiobutton', undefined, ''); 
+                    topRow.a3 = topRow.add('radiobutton', undefined, ''); 
             }
 
             { // Middle Row
-                win.b1 = win.cornerGroup.add('radiobutton', [18,47,48,69], ''); 
-                win.b2 = win.cornerGroup.add('radiobutton', [58,47,88,69], ''); 
-                win.b3 = win.cornerGroup.add('radiobutton', [98,47,128,69], ''); 
+                var midRow = win.cornerGroup.add('group');
+                    midRow.b1 = midRow.add('radiobutton', undefined, ''); 
+                    midRow.b2 = midRow.add('radiobutton', undefined, ''); 
+                    midRow.b3 = midRow.add('radiobutton', undefined, ''); 
             }
 
             { // Bottom Row
-                win.c1 = win.cornerGroup.add('radiobutton', [18,77,48,99], ''); 
-                win.c2 = win.cornerGroup.add('radiobutton', [58,77,88,99], ''); 
-                win.c3 = win.cornerGroup.add('radiobutton', [98,77,128,99], ''); 
+                var lowRow = win.cornerGroup.add('group');
+                    lowRow.c1 = lowRow.add('radiobutton', undefined, ''); 
+                    lowRow.c2 = lowRow.add('radiobutton', undefined, ''); 
+                    lowRow.c3 = lowRow.add('radiobutton', undefined, ''); 
             }
         
-            win.b2.value = true;
+            midRow.b2.value = true;
             curPos = 4;
         }
 
         { // Options
-            win.optionGroup = win.add('panel', [14,186,145,295], 'Options', {borderStyle: "etched"});
-            win.parentOption = win.add('checkbox', [33,204,142,226], 'Parent to layer'); 
+            win.optionGroup = win.add('panel', undefined, 'Options', {borderStyle: "etched"});
+            
+            win.parentOption = win.optionGroup.add('checkbox', undefined, 'Parent to layer'); 
             win.parentOption.value = false; 
 
             { // xOffset Line
-                win.xOffLabel = win.optionGroup.add('statictext', [10,40,60,60], 'X Offset'); 
-                win.xOffLabel.justify = 'right'; 
-                win.xOffInput = win.optionGroup.add('edittext', [65,37,95,59], ''); 
-                win.xOffInput.text = "0";
-                win.xOffPixels = win.optionGroup.add('statictext', [98,40,118,60], 'px'); 
-                win.xOffPixels.justify = 'left'; 
+                var xOffRow = win.optionGroup.add('group');
+                    xOffRow.xOffLabel = xOffRow.add('statictext', undefined, 'X Offset'); 
+                    xOffRow.xOffInput = xOffRow.add('edittext', undefined, ''); 
+                    //xOffRow.xOffPixels = xOffRow.add('statictext', undefined, 'px'); 
             }
     
             { // yOffset Line
-                win.xOffLabel = win.optionGroup.add('statictext', [10,70,60,90], 'Y Offset'); 
-                win.xOffLabel.justify = 'right'; 
-                win.yOffInput = win.optionGroup.add('edittext', [65,67,95,89], ''); 
-                win.yOffInput.text = "0";
-                win.yOffPixels = win.optionGroup.add('statictext', [98,70,118,90], 'px'); 
-                win.yOffPixels.justify = 'left'; 
+                var yOffRow = win.optionGroup.add('group');
+                    yOffRow.yOffLabel = yOffRow.add('statictext', undefined, 'Y Offset'); 
+                    yOffRow.yOffInput = yOffRow.add('edittext', undefined, ''); 
+                    //yOffRow.yOffPixels = yOffRow.add('statictext', undefined, 'px'); 
             }
+        
+            { // zOffset Line
+                var zOffRow = win.optionGroup.add('group');
+                    zOffRow.zOffLabel = zOffRow.add('statictext', undefined, 'Z Offset'); 
+                    zOffRow.zOffInput = zOffRow.add('edittext', undefined, ''); 
+                    //zOffRow.zOffPixels = zOffRow.add('statictext', undefined, 'px'); 
+            }
+        
+            xOffRow.xOffInput.text = yOffRow.yOffInput.text = zOffRow.zOffInput.text = "0 px";
+            xOffRow.xOffInput.characters = yOffRow.yOffInput.characters = zOffRow.zOffInput.characters = 4;
+
         }
 
+        function update (str) {
+            try {
+                var array = str.split(" ");
+                var num = String (Number (array[0]));
+                if (isNaN(num))
+                    throw new Error("Not a number");
+                return num;
+            } catch (_) {
+                return NaN;
+            }
+        } // update
+
         { // Buttons
-            win.explodeButton = win.add('button', [12,149,146,175], 'Create'); 
+            win.explodeButton = win.add('button', undefined, 'Create'); 
             win.explodeButton.onClick = function () {
                 for (var i = 0; i < win.cornerGroup.children.length; i++){
                     if (win.cornerGroup.children[i].value == true){
@@ -232,14 +255,18 @@
                 }
             
                 var parentNull = win.parentOption.value;
-                var xOffset = parseInt(win.xOffInput.text);
-                var yOffset = parseInt(win.yOffInput.text);
-                                
+                var xOffset = update(xOffRow.xOffInput.text);
+                var yOffset = update(yOffRow.yOffInput.text);
+                var zOffset = update(zOffRow.zOffInput.text);
+
                 if (app.project) {
                     var activeItem = app.project.activeItem;
                     if (activeItem != null && (activeItem instanceof CompItem)) {
                         app.beginUndoGroup(zl_CCN__scriptName);
-                        zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset);
+                        if (!xOffset || !yOffset || !zOffset){
+                            alert("Invalid input!");
+                        }else{
+                            zl_CreateCornerNull(thisObj, curPos, parentNull, xOffset, yOffset, zOffset);}
                         app.endUndoGroup();
                     } else {
                         alert("Select a layer!", zl_CCN__scriptName);
@@ -250,7 +277,8 @@
             }
         }
 
-        
+
+
         if (win instanceof Window) {
             win.show();
         } else {
