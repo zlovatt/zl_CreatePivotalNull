@@ -4,14 +4,13 @@
     zack@zacklovatt.com
  
     Name: zl_CreateCornerNull
-    Version: 0.3
+    Version: 0.4
  
     Description:
-        This script looks at a selected shape layer and breaks apart all vector
-        groups & paths into separate layers. Handy if you're converting AI layers.
+        This script creates a null at one of 9 key points for a layer. Will consider
+        rotation, scale, etc.
         
-        If you have general effects applied at the end (fill, stroke, other effects),
-        they will remain present on each layer.
+        Options for manual offset & parenting null to layer.
 
         Originally requested by Jayse Hansen (jayse.tv)
 
@@ -32,6 +31,8 @@
         Parameters:
         thisObj - "this" object.
         curPos - position to put null
+        parentNull - bool, whether to parent null to layer
+        xOffset & yOffset - amount of pixels to shift null
      
         Returns:
         Nothing.
