@@ -4,7 +4,7 @@
     zack@zacklovatt.com
  
     Name: zl_CreatePivotalNull
-    Version: 1.1
+    Version: 1.2
  
     Description:
         This script creates a null at one of 9 key points for a layer. Will consider
@@ -71,6 +71,36 @@
 
 
     /****************************** 
+        zl_CreatePivotalNull_setKeys()
+          
+        Description:
+        Try/catch for animated properties
+         
+        Parameters:
+        thisComp - current comp
+        sourceLayer - original layer to create null from
+        targetLayer - the new null, to shift
+        targetPos - target corner to shift to
+        x/y/zOffset - user-set offsets to position
+        
+        Returns:
+        Nothing.
+     ******************************/
+    function zl_CreatePivotalNull_setKeys(thisComp, rotationProperty, newValue){
+        if (rotationProperty.isTimeVarying == true){
+             
+//            var valDiff = rotationProperty.valueAtTime(rotationProperty.keyTime(rotationProperty.nearestKeyIndex(thisComp.time)),false);
+            var valDiff = rotationProperty.valueAtTime((thisComp.time),false);
+            
+            for (var i = 1; i <= rotationProperty.numKeys; i++){
+                var curVal = rotationProperty.keyValue(i);
+                rotationProperty.setValueAtKey(i, curVal - valDiff);
+            }
+        }else
+            rotationProperty.setValue(newValue);
+    }
+ 
+    /****************************** 
         zl_CreatePivotalNull_moveNull()
           
         Description:
@@ -97,17 +127,18 @@
             tempRot = sourceLayer.rotation.value;
         
         if (sourceLayer.rotation.isModified){
-            sourceLayer.rotation.setValue(0);
+            zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.rotation, 0);
             resetRot = true;
         }
     
         if (is3d)
             if (sourceLayer.xRotation.isModified || sourceLayer.yRotation.isModified || sourceLayer.zRotation.isModified || sourceLayer.orientation.isModified){
-                sourceLayer.orientation.setValue([0,0,0]);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.orientation, [0,0,0]);
 
-                sourceLayer.xRotation.setValue(0);
-                sourceLayer.yRotation.setValue(0);
-                sourceLayer.zRotation.setValue(0);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.xRotation, 0);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.yRotation, 0);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.zRotation, 0);
+                
                 resetRot = true;
             }
 
@@ -157,18 +188,20 @@
         var yPos = sourceLayer.position.value[1];
         var zPos = sourceLayer.position.value[2];
 
-        targetLayer.position.setValue([xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
+        zl_CreatePivotalNull_setKeys(thisComp, targetLayer.position, [xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
+        //targetLayer.position.setValue([xPos + xShift + parseInt(offsetArray[0]), yPos + yShift + parseInt(offsetArray[1]), zPos + zShift + parseInt(offsetArray[2])]);
 
         if (resetRot == true){
             targetLayer.parent = sourceLayer;
 
             if (!is3d)
-                sourceLayer.rotation.setValue(tempRot);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.rotation, tempRot);
             else if (is3d){
-                sourceLayer.zRotation.setValue(tempRot[2]);
-                sourceLayer.yRotation.setValue(tempRot[1]);
-                sourceLayer.xRotation.setValue(tempRot[0]);
-                sourceLayer.orientation.setValue(tempOrient); 
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.zRotation, tempRot[2]);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.yRotation, tempRot[1]);
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.xRotation, tempRot[0]);
+
+                zl_CreatePivotalNull_setKeys(thisComp, sourceLayer.orientation, tempOrient);
             }
 
             targetLayer.parent = null;
